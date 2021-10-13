@@ -10,10 +10,9 @@
 
 // For now sending requests to 8.8.8.8
 // Later will be sent to own server
-char *dns_servers = "8.8.8.8";
+char *dns_servers = "127.0.0.53";
 
 int main(int argc, char **argv) {
-    char ip[15];
     char host[100];
 
     for (int i = 1; i < argc; i++) {
@@ -30,8 +29,7 @@ int main(int argc, char **argv) {
         free_parsed_url(parsed_url);
 
         printf("Host : %s\n", host);
-        get_ip_from_name(host, dns_servers, ip);
-        printf("%s\n", ip);
+        get_info(host, dns_servers);
     }
     return 0;
 }

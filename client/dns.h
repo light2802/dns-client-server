@@ -8,6 +8,23 @@
 // Necessary structures and methods for making DNS query and resolving the
 // response
 
+#define A 1      // a host address
+#define NS 2     // an authoritative name server
+#define MD 3     // a mail destination (Obsolete - use MX)
+#define MF 4     // a mail forwarder (Obsolete - use MX)
+#define CNAME 5  // the canonical name for an alias
+#define SOA 6    // marks the start of a zone of authority
+#define MB 7     // a mailbox domain name (EXPERIMENTAL)
+#define MG 8     // a mail group member (EXPERIMENTAL)
+#define MR 9     // a mail rename domain name (EXPERIMENTAL)
+#define null 10  // a null RR (EXPERIMENTAL)
+#define WKS 11   // a well known service description
+#define PTR 12   // a domain name pointer
+#define HINFO 13 // host information
+#define MINFO 14 // mailbox or mail list information
+#define MX 15    // mail exchange
+#define TXT 16   // text strings
+#define AAAA 28  // IPv6 address
 struct dns_header {
     unsigned short id; // identification number
 
@@ -36,7 +53,7 @@ struct res_data {
     unsigned short type;
     unsigned short class;
     unsigned int   ttl;
-    unsigned short data_len;
+    unsigned short rdlength;
 } __attribute__((packed));
 struct res_record {
     unsigned char *  name;
@@ -47,5 +64,5 @@ struct question {
     unsigned short qtype;
     unsigned short qclass;
 };
-void get_ip_from_name(char *hostname, char dns_server[], char *ip_buffer);
+void get_info(char *hostname, char dns_server[]);
 #endif

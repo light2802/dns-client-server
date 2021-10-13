@@ -39,7 +39,7 @@ struct dns_query make_dns_query(char *hostname, int type, int class) {
     dns->opcode     = 0; // This is a standard query
     dns->aa         = 0; // Not Authoritative
     dns->tc         = 0; // This message is not truncated
-    dns->rd         = 0; // Recursion Desired
+    dns->rd         = 1; // Recursion Desired
     dns->ra         = 0; // Recursion not available! hey we dont have it (lol)
     dns->z          = 0;
     dns->ad         = 0;
@@ -114,7 +114,7 @@ read_name(unsigned char *reader, unsigned char *buffer, int *count) {
     name[i - 1] = '\0'; // remove the last dot
     return name;
 }
-void read_ip(unsigned char *query_buffer, int buffer_len, char *ip_buffer) {
+void read_info(unsigned char *query_buffer, int buffer_len) {
     unsigned char *    reader = &query_buffer[buffer_len];
     struct dns_header *dns    = (struct dns_header *)query_buffer;
     struct res_record  answers[20];
@@ -129,40 +129,66 @@ void read_ip(unsigned char *query_buffer, int buffer_len, char *ip_buffer) {
         reader += sizeof(struct res_data);
 
         if (ntohs(answers[i].resource->type)) {
-            if (ntohs(answers[i].resource->type) == 1) k = i;
+            // if (ntohs(answers[i].resource->type) == A) k = i;
             answers[i].rdata = (unsigned char *)malloc(
-                    ntohs(answers[i].resource->data_len));
+                    ntohs(answers[i].resource->rdlength));
 
-            for (j = 0; j < ntohs(answers[i].resource->data_len); j++) {
+            for (j = 0; j < ntohs(answers[i].resource->rdlength); j++) {
                 answers[i].rdata[j] = reader[j];
             }
 
-            answers[i].rdata[ntohs(answers[i].resource->data_len)] = '\0';
+            answers[i].rdata[ntohs(answers[i].resource->rdlength)] = '\0';
 
-            reader += ntohs(answers[i].resource->data_len);
+            reader += ntohs(answers[i].resource->rdlength);
         } else {
             answers[i].rdata = read_name(reader, query_buffer, &stop);
             reader += stop;
         }
     }
-    struct sockaddr_in a;
-    long *             p;
-    p                 = (long *)answers[k].rdata;
-    a.sin_addr.s_addr = (*p);
-    strcpy(ip_buffer, inet_ntoa(a.sin_addr));
+    printf("Storing done\n");
+    for (i = 0; i < ntohs(dns->ans_count); i++) {
+        switch (ntohs(answers[i].resource->type)) {
+        case A: {
+            struct sockaddr_in a;
+            long *             p;
+            p                 = (long *)answers[k].rdata;
+            a.sin_addr.s_addr = (*p);
+            printf("IPv4 : %s\n", inet_ntoa(a.sin_addr));
+            break;
+        }
+        case AAAA: {
+            struct sockaddr_in a;
+            double long *      p;
+            p                 = (double long *)answers[i].rdata;
+            a.sin_addr.s_addr = (*p);
+            printf("IPv6 : %s\n", inet_ntoa(a.sin_addr));
+            break;
+        }
+        case CNAME: {
+            printf("%s CNAME : %s\n", answers[i].name, answers[i].rdata);
+        }
+        }
+    }
+    //    p                 = (long *)answers[k].rdata;
+    //    a.sin_addr.s_addr = (*p);
+    //  strcpy(ip_buffer, inet_ntoa(a.sin_addr));
     for (i = 0; i < ntohs(dns->ans_count); i++) {
         free(answers[i].name);
         free(answers[i].rdata);
     }
 }
-void get_ip_from_name(char hostname[], char dns_server[], char *ip_buffer) {
+void get_info(char hostname[], char dns_server[]) {
     int                sock = socket(AF_INET, SOCK_DGRAM, 0);
+    char               ip_buffer[15];
     struct sockaddr_in server_addr;
     server_addr.sin_family      = AF_INET;
     server_addr.sin_port        = htons(53);
     server_addr.sin_addr.s_addr = inet_addr(dns_server);
     struct dns_query q;
-    q = make_dns_query(hostname, 1, 1);
+    int              len = sizeof(server_addr);
+    unsigned char    answer_query_buffer[DNS_QUERY_BUFFER_SIZE];
+
+    q = make_dns_query(hostname, 1, A);
     if (sendto(sock,
                q.query,
                q.len,
@@ -173,8 +199,6 @@ void get_ip_from_name(char hostname[], char dns_server[], char *ip_buffer) {
         printf("SEND FAIL\n");
     } else
         printf("SEND SUCESS\n");
-    int           len = sizeof(server_addr);
-    unsigned char answer_query_buffer[DNS_QUERY_BUFFER_SIZE];
     if (recvfrom(sock,
                  answer_query_buffer,
                  DNS_QUERY_BUFFER_SIZE,
@@ -185,8 +209,30 @@ void get_ip_from_name(char hostname[], char dns_server[], char *ip_buffer) {
         printf("Recieve fail\n");
     else
         printf("Recieve success\n");
-    // memset(ip_buffer, 0, 15);
-    // printf("%s:)\n", ip_buffer);
-    read_ip(answer_query_buffer, q.len, ip_buffer);
+    read_info(answer_query_buffer, q.len);
+
+    q = make_dns_query(hostname, 1, AAAA);
+    if (sendto(sock,
+               q.query,
+               q.len,
+               0,
+               (struct sockaddr *)&server_addr,
+               sizeof(server_addr))
+        < 0) {
+        printf("SEND FAIL\n");
+    } else
+        printf("SEND SUCESS\n");
+    if (recvfrom(sock,
+                 answer_query_buffer,
+                 DNS_QUERY_BUFFER_SIZE,
+                 0,
+                 (struct sockaddr *)&server_addr,
+                 (socklen_t *)(&len))
+        < 0)
+        printf("Recieve fail\n");
+    else
+        printf("Recieve success\n");
+    read_info(answer_query_buffer, q.len);
+
     close(sock);
 }
