@@ -24,7 +24,7 @@ void ChangetoDnsNameFormat(unsigned char *dns, unsigned char *host) {
 }
 
 // make dns query for given hostname of given types and class
-struct dns_query make_dns_query(char *hostname, int type, int class) {
+struct dns_query make_dns_query(char *hostname, int type) {
     // 6 layers of header each of 2 bytes
     int                i;
     unsigned char *    qname;
@@ -58,7 +58,7 @@ struct dns_query make_dns_query(char *hostname, int type, int class) {
                                + (strlen((const char *)qname) + 1)]; // fill it
 
     qinfo->qtype  = htons(type); // type of the query , A , MX , CNAME , NS etc
-    qinfo->qclass = htons(class); // its internet (lol)
+    qinfo->qclass = htons(INTERNET); // its internet (lol)
 
     struct dns_query query = {.query = buffer,
                               .len   = sizeof(struct dns_header)
@@ -165,13 +165,24 @@ void read_info(unsigned char *query_buffer, int buffer_len) {
             break;
         }
         case CNAME: {
-            printf("%s CNAME : %s\n", answers[i].name, answers[i].rdata);
+            int           x, y;
+            unsigned char cname[256];
+            strcpy(cname, answers[i].rdata);
+            for (x = 0; x < strlen(cname); x++) {
+                y = cname[x];
+                for (int z = 0; z < y; z++) {
+                    cname[x] = cname[x + 1];
+                    x        = x + 1;
+                }
+                cname[x] = '.';
+            }
+            cname[x - 1] = '\0'; // remove the last dot
+
+            printf("%s CNAME : %s\n", answers[i].name, cname);
+            // printf("%s CNAME : %s\n", answers[i].name, answers[i].rdata);
         }
         }
     }
-    //    p                 = (long *)answers[k].rdata;
-    //    a.sin_addr.s_addr = (*p);
-    //  strcpy(ip_buffer, inet_ntoa(a.sin_addr));
     for (i = 0; i < ntohs(dns->ans_count); i++) {
         free(answers[i].name);
         free(answers[i].rdata);
@@ -188,7 +199,7 @@ void get_info(char hostname[], char dns_server[]) {
     int              len = sizeof(server_addr);
     unsigned char    answer_query_buffer[DNS_QUERY_BUFFER_SIZE];
 
-    q = make_dns_query(hostname, 1, A);
+    q = make_dns_query(hostname, A);
     if (sendto(sock,
                q.query,
                q.len,
@@ -211,7 +222,9 @@ void get_info(char hostname[], char dns_server[]) {
         printf("Recieve success\n");
     read_info(answer_query_buffer, q.len);
 
-    q = make_dns_query(hostname, 1, AAAA);
+    printf("\n\n");
+
+    q = make_dns_query(hostname, AAAA);
     if (sendto(sock,
                q.query,
                q.len,
