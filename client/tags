@@ -4,6 +4,7 @@
 !_TAG_PROGRAM_NAME	Exuberant Ctags	//
 !_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
 !_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+.PHONY	Makefile	/^.PHONY=check$/;"	m
 A	dns.h	11;"	d
 AAAA	dns.h	27;"	d
 CNAME	dns.h	15;"	d
@@ -12,6 +13,7 @@ DNS_H	dns.h	2;"	d
 DNS_HEADER_SIZE	dns.h	4;"	d
 DNS_QUERY_BUFFER_SIZE	dns.h	5;"	d
 HINFO	dns.h	23;"	d
+INTERNET	dns.h	10;"	d
 MAX_IP_LEN	dns.h	6;"	d
 MB	dns.h	17;"	d
 MD	dns.h	13;"	d
@@ -43,7 +45,7 @@ host_ip	url_parse.h	/^    char *host_ip;$/;"	m	struct:url_parser_url
 id	dns.h	/^    unsigned short id; \/\/ identification number$/;"	m	struct:dns_header
 len	dns.h	/^    int            len;$/;"	m	struct:dns_query
 main	main.c	/^int main(int argc, char **argv) {$/;"	f
-make_dns_query	dns.c	/^struct dns_query make_dns_query(char *hostname, int type, int class) {$/;"	f
+make_dns_query	dns.c	/^struct dns_query make_dns_query(char *hostname, int type) {$/;"	f
 name	dns.h	/^    unsigned char *  name;$/;"	m	struct:res_record
 null	dns.h	20;"	d
 opcode	dns.h	/^    unsigned char opcode : 4; \/\/ purpose of message$/;"	m	struct:dns_header
