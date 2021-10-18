@@ -9,8 +9,8 @@
 #include <string.h>
 
 // For now sending requests to 8.8.8.8
-// Later will be sent to own server
-char *dns_servers = "127.0.0.53";
+// Change this to whatever random ip is set by server
+char *dns_servers = "10.200.60.40";
 
 int main(int argc, char **argv) {
     char host[100];

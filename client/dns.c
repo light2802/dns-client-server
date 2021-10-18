@@ -190,7 +190,7 @@ void get_info(char hostname[], char dns_server[]) {
     char               ip_buffer[15];
     struct sockaddr_in server_addr;
     server_addr.sin_family      = AF_INET;
-    server_addr.sin_port        = htons(53);
+    server_addr.sin_port        = htons(5000);
     server_addr.sin_addr.s_addr = inet_addr(dns_server);
     struct dns_query q;
     int              len = sizeof(server_addr);
