@@ -149,24 +149,23 @@ void read_info(unsigned char *query_buffer, int buffer_len) {
     for (i = 0; i < ntohs(dns->ans_count); i++) {
         switch (ntohs(answers[i].resource->type)) {
         case A: {
-            struct sockaddr_in a;
-            long *             p;
-            p                 = (long *)answers[k].rdata;
-            a.sin_addr.s_addr = (*p);
-            printf("IPv4 : %s\n", inet_ntoa(a.sin_addr));
+            char addr[INET_ADDRSTRLEN];
+            inet_ntop(AF_INET, &answers[i].rdata, addr, INET_ADDRSTRLEN);
+
+            printf("IPv4 for %s : %s\n", answers[i].name, addr);
             break;
         }
         case AAAA: {
-            struct sockaddr_in a;
-            double long *      p;
-            p                 = (double long *)answers[i].rdata;
-            a.sin_addr.s_addr = (*p);
-            printf("IPv6 : %s\n", inet_ntoa(a.sin_addr));
+            char addr[INET6_ADDRSTRLEN];
+            inet_ntop(AF_INET6, &answers[i].rdata, addr, INET6_ADDRSTRLEN);
+
+            printf("IPv6 for %s : %s\n", answers[i].name, addr);
             break;
         }
         case CNAME: {
             int           x, y;
-            unsigned char cname[256];
+            unsigned char cname[1024];
+            bzero(cname, 1024);
             strcpy(cname, answers[i].rdata);
             for (x = 0; x < strlen(cname); x++) {
                 y = cname[x];
@@ -176,10 +175,8 @@ void read_info(unsigned char *query_buffer, int buffer_len) {
                 }
                 cname[x] = '.';
             }
-            cname[x - 1] = '\0'; // remove the last dot
-
+            cname[x] = '\0'; // remove the last dot
             printf("%s CNAME : %s\n", answers[i].name, cname);
-            // printf("%s CNAME : %s\n", answers[i].name, answers[i].rdata);
         }
         }
     }
@@ -247,5 +244,6 @@ void get_info(char hostname[], char dns_server[]) {
         printf("Recieve success\n");
     read_info(answer_query_buffer, q.len);
 
+    printf("\n\n");
     close(sock);
 }
