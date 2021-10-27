@@ -10,7 +10,7 @@
 
 // For now sending requests to 8.8.8.8
 // Change this to whatever random ip is set by server
-char *dns_servers = "10.200.60.40";
+char *dns_servers = "127.0.0.53";
 
 int main(int argc, char **argv) {
     char host[100];
