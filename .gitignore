@@ -1,2 +1,4 @@
 link.txt
-./server/__pycache__/*
+*.o
+*.out
+*.sh

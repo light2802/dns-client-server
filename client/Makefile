@@ -1,5 +1,5 @@
 client:
-	gcc *.c -g -o client
+	gcc *.c -g -o client.out
 
 check: client
 	./client http://www.microsoft.com 
@@ -8,6 +8,5 @@ check: client
 	./client http://www.facebook.com
 
 clean: client
-	rm client
-.PHONY=check
-.PHONY+=clean
+	rm -f client
+.PHONY=check clean

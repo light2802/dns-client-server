@@ -149,9 +149,12 @@ void read_info(unsigned char *query_buffer, int buffer_len) {
     for (i = 0; i < ntohs(dns->ans_count); i++) {
         switch (ntohs(answers[i].resource->type)) {
         case A: {
-            char addr[INET_ADDRSTRLEN];
-            inet_ntop(AF_INET, &answers[i].rdata, addr, INET_ADDRSTRLEN);
-
+            char               addr[INET_ADDRSTRLEN];
+            struct sockaddr_in ad;
+            ad.sin_family      = AF_INET;
+            ad.sin_addr.s_addr = (long)answers[i].rdata;
+            // inet_ntop(AF_INET, &ad.sin_addr.s_addr, addr, INET_ADDRSTRLEN);
+            strcpy(addr, inet_ntoa(ad.sin_addr));
             printf("IPv4 for %s : %s\n", answers[i].name, addr);
             break;
         }
