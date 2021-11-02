@@ -11,7 +11,7 @@ $ make
 ## Simple tutorial
 
 ```bash
-$ server -h
+$ ./server.out -h
 Usage: dnsproxy [options]
   -d or --daemon
                        (daemon mode)
@@ -32,6 +32,7 @@ Usage: dnsproxy [options]
 ## Hosts file example
 
 ```
+$ ./server.out -d
 127.0.0.1 example.com www.example.com
 192.168.0.1 *.test.com
 192.168.0.2 2*.test.com
