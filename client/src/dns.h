@@ -65,5 +65,5 @@ struct question {
     unsigned short qtype;
     unsigned short qclass;
 };
-void get_info(char *hostname, char dns_server[]);
+void get_info(char *hostname, char *dns_server, char *query_type);
 #endif

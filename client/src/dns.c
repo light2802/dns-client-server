@@ -188,7 +188,22 @@ void read_info(unsigned char *query_buffer, int buffer_len) {
         free(answers[i].rdata);
     }
 }
-void get_info(char hostname[], char dns_server[]) {
+int get_type(char *query_type) {
+    if (!strcmp(query_type, "A")) return A;
+    if (!strcmp(query_type, "AAAA")) return AAAA;
+    if (!strcmp(query_type, "MX")) return MX;
+    if (!strcmp(query_type, "CNAME")) return CNAME;
+    if (!strcmp(query_type, "NS")) return NS;
+    if (!strcmp(query_type, "SOA")) return SOA;
+    if (!strcmp(query_type, "MD")) return MD;
+    if (!strcmp(query_type, "NULL")) return null;
+    if (!strcmp(query_type, "WKS")) return WKS;
+    if (!strcmp(query_type, "MINFO")) return MINFO;
+    if (!strcmp(query_type, "TXT")) return TXT;
+    return -1;
+}
+
+void get_info(char *hostname, char *dns_server, char *query_type) {
     int                sock = socket(AF_INET, SOCK_DGRAM, 0);
     struct sockaddr_in server_addr;
     server_addr.sin_family      = AF_INET;
@@ -197,33 +212,12 @@ void get_info(char hostname[], char dns_server[]) {
     struct dns_query q;
     int              len = sizeof(server_addr);
     unsigned char    answer_query_buffer[DNS_QUERY_BUFFER_SIZE];
-
-    q = make_dns_query(hostname, A);
-    if (sendto(sock,
-               q.query,
-               q.len,
-               0,
-               (struct sockaddr *)&server_addr,
-               sizeof(server_addr))
-        < 0) {
-        printf("SEND FAIL\n");
-    } else
-        printf("SEND SUCESS\n");
-    if (recvfrom(sock,
-                 answer_query_buffer,
-                 DNS_QUERY_BUFFER_SIZE,
-                 0,
-                 (struct sockaddr *)&server_addr,
-                 (socklen_t *)(&len))
-        < 0)
-        printf("Recieve fail\n");
-    else
-        printf("Recieve success\n");
-    read_info(answer_query_buffer, q.len);
-
-    printf("\n\n");
-
-    q = make_dns_query(hostname, AAAA);
+    int              type = get_type(query_type);
+    if (type < 0) {
+        printf("Invlaid query type :(\n");
+        return;
+    }
+    q = make_dns_query(hostname, type);
     if (sendto(sock,
                q.query,
                q.len,

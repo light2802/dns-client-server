@@ -1,5 +1,5 @@
-#include "asciilogo.h"
 #include "dns_server.h"
+#include "asciilogo.h"
 
 #define PACKAGE_SIZE 8192
 #define CACHE_CLEAN_TIME (MIN_TTL / 2 + 1)
@@ -483,11 +483,10 @@ static void display_help() {
 int main(int argc, const char *argv[]) {
     int            opt, optind;
     const char *   optarg;
-    int            use_daemon        = 0;
     int            remote_tcp        = 0;
     int            transport_timeout = 5;
     const char *   hosts_file        = NULL;
-    const char *   local_addr        = "88.88.88.88";
+    const char *   local_addr        = "127.0.0.1";
     const char *   remote_addr       = "8.8.8.8";
     unsigned short local_port = 53, remote_port = 53;
 
