@@ -1,6 +1,7 @@
 # dns-client-server
 
-
+This is just the README template provided by gitlab
+Orignal README inside respective folders
 
 ## Getting started
 

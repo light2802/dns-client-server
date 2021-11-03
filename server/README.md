@@ -29,7 +29,7 @@ Usage: dnsproxy [options]
   -v, --version        (print version and exit)
 ```
 
-## Hosts file example
+## Example
 
 ```
 $ ./server.out -d

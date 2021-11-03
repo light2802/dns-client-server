@@ -16,7 +16,7 @@ $ make check
 $ ./client.out http://<domain_name>                                                           
 ```                                                                            
                                                                                
-## Hosts file example                                                          
+## Example                                                          
                                                                                
 ```                                   
 $ ./client.out http://www.google.com
