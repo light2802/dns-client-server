@@ -13,9 +13,9 @@ $ make
 ```bash
 $ ./server.out -h
 Usage: dnsproxy [options]
-  -d or --daemon
-                       (daemon mode)
-  -p <port> or --port=<port>
+  -r <local-ip> or --local-addr=<port>
+                       (local server ip, default 88.88.88.88)
+  -p <port> or --local-port=<port>
                        (local bind port, default 53)
   -R <ip> or --remote-addr=<ip>
                        (remote server ip, default 8.8.8.8)
@@ -23,8 +23,6 @@ Usage: dnsproxy [options]
                        (remote server port, default 53)
   -T or --remote-tcp
                        (connect remote server in tcp, default no)
-  -f <file> or --hosts-file=<file>
-                       (user-defined hosts file)
   -h, --help           (print help and exit)
   -v, --version        (print version and exit)
 ```
@@ -32,7 +30,7 @@ Usage: dnsproxy [options]
 ## Example
 
 ```
-$ ./server.out -d
+$ ./server.out
 127.0.0.1 example.com www.example.com
 192.168.0.1 *.test.com
 192.168.0.2 2*.test.com
