@@ -1,3 +1,4 @@
+#Pretty noob Makelfile :`(
 client:
 	gcc *.c -g -o client.out
 

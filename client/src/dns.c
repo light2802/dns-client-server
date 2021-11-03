@@ -190,7 +190,6 @@ void read_info(unsigned char *query_buffer, int buffer_len) {
 }
 void get_info(char hostname[], char dns_server[]) {
     int                sock = socket(AF_INET, SOCK_DGRAM, 0);
-    char               ip_buffer[15];
     struct sockaddr_in server_addr;
     server_addr.sin_family      = AF_INET;
     server_addr.sin_port        = htons(53);

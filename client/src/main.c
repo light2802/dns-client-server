@@ -1,15 +1,13 @@
 #include "dns.h"
 #include "url_parse.h"
 #include <arpa/inet.h>
-#include <assert.h>
 #include <netinet/in.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 // For now sending requests to 8.8.8.8
 // Change this to whatever random ip is set by server
-char *dns_servers = "127.0.0.53";
+char *dns_servers = "8.8.8.8";
 
 int main(int argc, char **argv) {
     char host[100];

@@ -1,5 +1,4 @@
 #include "xgetopt.h"
-
 #include <stdio.h>
 #include <string.h>
 

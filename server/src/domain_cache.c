@@ -1,4 +1,4 @@
-#include "dnsproxy.h"
+#include "dns_server.h"
 
 static struct {
     unsigned int     count;
