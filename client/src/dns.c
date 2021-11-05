@@ -129,7 +129,6 @@ void read_info(unsigned char *query_buffer, int buffer_len) {
         reader += sizeof(struct res_data);
 
         if (ntohs(answers[i].resource->type)) {
-            // if (ntohs(answers[i].resource->type) == A) k = i;
             answers[i].rdata = (unsigned char *)malloc(
                     ntohs(answers[i].resource->rdlength));
 
@@ -149,18 +148,19 @@ void read_info(unsigned char *query_buffer, int buffer_len) {
     for (i = 0; i < ntohs(dns->ans_count); i++) {
         switch (ntohs(answers[i].resource->type)) {
         case A: {
-            char               addr[INET_ADDRSTRLEN];
-            struct sockaddr_in ad;
-            ad.sin_family      = AF_INET;
-            ad.sin_addr.s_addr = (long)answers[i].rdata;
-            // inet_ntop(AF_INET, &ad.sin_addr.s_addr, addr, INET_ADDRSTRLEN);
-            strcpy(addr, inet_ntoa(ad.sin_addr));
+            char           addr[INET_ADDRSTRLEN];
+            struct in_addr s;
+            memcpy(&s, answers[i].rdata, 4);
+            inet_ntop(AF_INET, &s, addr, INET_ADDRSTRLEN);
+
             printf("IPv4 for %s : %s\n", answers[i].name, addr);
             break;
         }
         case AAAA: {
-            char addr[INET6_ADDRSTRLEN];
-            inet_ntop(AF_INET6, &answers[i].rdata, addr, INET6_ADDRSTRLEN);
+            char            addr[INET6_ADDRSTRLEN];
+            struct in6_addr s;
+            memcpy(&s, answers[i].rdata, 16);
+            inet_ntop(AF_INET6, &s, addr, INET6_ADDRSTRLEN);
 
             printf("IPv6 for %s : %s\n", answers[i].name, addr);
             break;
@@ -203,12 +203,12 @@ int get_type(char *query_type) {
     return -1;
 }
 
-void get_info(char *hostname, char *dns_server, char *query_type) {
+void get_info(char *             hostname,
+              struct sockaddr_in dns_server,
+              char *             query_type) {
     int                sock = socket(AF_INET, SOCK_DGRAM, 0);
     struct sockaddr_in server_addr;
-    server_addr.sin_family      = AF_INET;
-    server_addr.sin_port        = htons(53);
-    server_addr.sin_addr.s_addr = inet_addr(dns_server);
+    server_addr = dns_server;
     struct dns_query q;
     int              len = sizeof(server_addr);
     unsigned char    answer_query_buffer[DNS_QUERY_BUFFER_SIZE];

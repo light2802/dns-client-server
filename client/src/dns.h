@@ -1,6 +1,7 @@
 #ifndef DNS_H
 #define DNS_H
-
+#include <netinet/in.h>
+#include <sys/types.h>
 #define DNS_HEADER_SIZE sizeof(unsigned short) * 6
 #define DNS_QUERY_BUFFER_SIZE sizeof(unsigned char) * 655335
 #define MAX_IP_LEN 15
@@ -65,5 +66,5 @@ struct question {
     unsigned short qtype;
     unsigned short qclass;
 };
-void get_info(char *hostname, char *dns_server, char *query_type);
+void get_info(char *hostname, struct sockaddr_in dns_server, char *query_type);
 #endif
