@@ -1,15 +1,15 @@
-#Pretty noob Makelfile :`(
-client:
-	cd src & gcc *.c -g -o client.out
-
-check: client
+#Pretty noob Makelfile :`( sorry
+client.out:
 	cd src
-	./client http://www.microsoft.com 
-	./client http://www.google.com 
-	./client http://www.github.com 
-	./client http://www.facebook.com
+	gcc *.c -g -o ../client.out
 
-clean: client
+check: client.out
 	cd src
-	rm -f client
+	./client.out http://www.microsoft.com 
+	./client.out http://www.google.com 
+	./client.out http://www.github.com 
+	./client.out http://www.facebook.com
+
+clean: client.out
+	rm -f client.out
 .PHONY=check clean
