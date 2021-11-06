@@ -34,12 +34,12 @@ struct dns_query make_dns_query(char *hostname, int type) {
     // Set the DNS structure to standard queries
     dns = (struct dns_header *)&buffer;
 
-    dns->id         = (unsigned short)htons(rand()); // Instead of random
-    dns->qr         = 0;                             // This is a query
-    dns->opcode     = 0; // This is a standard query
-    dns->aa         = 0; // Not Authoritative
-    dns->tc         = 0; // This message is not truncated
-    dns->rd         = 1; // Recursion Desired
+    dns->id = (unsigned short)htons(rand()); // random id doesn't really matter
+    dns->qr = 0;                             // This is a query
+    dns->opcode     = 0;                     // This is a standard query
+    dns->aa         = 0;                     // Not Authoritative
+    dns->tc         = 0;                     // This message is not truncated
+    dns->rd         = 1;                     // Recursion Desired
     dns->ra         = 0; // Recursion not available! hey we dont have it (lol)
     dns->z          = 0;
     dns->ad         = 0;
@@ -78,8 +78,7 @@ read_name(unsigned char *reader, unsigned char *buffer, int *count) {
     // read the names in 3www6google3com format
     while (*reader != 0) {
         if (*reader >= 192) {
-            offset = (*reader) * 256 + *(reader + 1)
-                     - 49152; // 49152 = 11000000 00000000 ;)
+            offset = (((*reader) & (~0xC0)) << 8) + *(reader + 1);
             reader = buffer + offset - 1;
             jumped = 1; // we have jumped to another location so counting wont
                         // go up!
@@ -97,9 +96,8 @@ read_name(unsigned char *reader, unsigned char *buffer, int *count) {
 
     name[p] = '\0'; // string complete
     if (jumped == 1) {
-        *count =
-                *count
-                + 1; // number of steps we actually moved forward in the packet
+        *count = *count + 1;
+        // number of steps we actually moved forward in the packet
     }
 
     // now convert 3www6google3com0 to www.google.com
@@ -127,8 +125,8 @@ void read_info(unsigned char *query_buffer, int buffer_len) {
 
         answers[i].resource = (struct res_data *)(reader);
         reader += sizeof(struct res_data);
-
-        if (ntohs(answers[i].resource->type)) {
+        if (ntohs(answers[i].resource->type) == A
+            || ntohs(answers[i].resource->type) == AAAA) {
             answers[i].rdata = (unsigned char *)malloc(
                     ntohs(answers[i].resource->rdlength));
 
@@ -139,6 +137,10 @@ void read_info(unsigned char *query_buffer, int buffer_len) {
             answers[i].rdata[ntohs(answers[i].resource->rdlength)] = '\0';
 
             reader += ntohs(answers[i].resource->rdlength);
+        } else if (ntohs(answers[i].resource->type) == MX) {
+            reader += 2;
+            answers[i].rdata = read_name(reader, query_buffer, &stop);
+            reader += stop;
         } else {
             answers[i].rdata = read_name(reader, query_buffer, &stop);
             reader += stop;
@@ -180,6 +182,27 @@ void read_info(unsigned char *query_buffer, int buffer_len) {
             }
             cname[x] = '\0'; // remove the last dot
             printf("%s CNAME : %s\n", answers[i].name, cname);
+            break;
+        }
+        case MX: {
+            int           x, y;
+            unsigned char mail[1024];
+            bzero(mail, 1024);
+            strcpy(mail, answers[i].rdata);
+            for (x = 0; x < strlen(mail); x++) {
+                y = mail[x];
+                for (int z = 0; z < y; z++) {
+                    mail[x] = mail[x + 1];
+                    x       = x + 1;
+                }
+                mail[x] = '.';
+            }
+            mail[x] = '\0'; // remove the last dot
+            printf("%s MX : %s\n", answers[i].name, answers[i].rdata);
+            break;
+        }
+        default: {
+            printf("This response type not supported yet :(\n");
         }
         }
     }
@@ -194,6 +217,7 @@ int get_type(char *query_type) {
     if (!strcmp(query_type, "MX")) return MX;
     if (!strcmp(query_type, "CNAME")) return CNAME;
     if (!strcmp(query_type, "NS")) return NS;
+    // Below dont work
     if (!strcmp(query_type, "SOA")) return SOA;
     if (!strcmp(query_type, "MD")) return MD;
     if (!strcmp(query_type, "NULL")) return null;

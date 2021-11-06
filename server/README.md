@@ -14,7 +14,7 @@ $ make
 $ ./server.out -h
 Usage: dnsproxy [options]
   -r <local-ip> or --local-addr=<port>
-                       (local server ip, default 88.88.88.88)
+                       (local server ip, default 127.0.0.1)
   -p <port> or --local-port=<port>
                        (local bind port, default 53)
   -R <ip> or --remote-addr=<ip>

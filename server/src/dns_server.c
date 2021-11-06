@@ -406,8 +406,8 @@ static int dns_server(const char *   local_addr,
         perror("bind service port");
         return -1;
     }
-    rdns->tcp                  = remote_tcp;
-    rdns->sock                 = INVALID_SOCKET;
+    rdns->tcp = remote_tcp;
+    //    rdns->sock                 = INVALID_SOCKET;
     rdns->addr.sin_family      = AF_INET;
     rdns->addr.sin_addr.s_addr = inet_addr(remote_addr);
     rdns->addr.sin_port        = htons(remote_port);
@@ -467,7 +467,7 @@ struct xoption options[] = {
 static void display_help() {
     printf("Usage: dns_server [options]\n"
            "  -r <ip> or --local-addr=<ip>\n"
-           "                       (local server ip, default 88.88.88.88)\n"
+           "                       (local server ip, default 127.0.0.1)\n"
            "  -p <port> or --loacl-port=<port>\n"
            "                       (local bind port, default 53)\n"
            "  -R <ip> or --remote-addr=<ip>\n"

@@ -1,3 +1,4 @@
+// Its jsut for fun nothing to see here
 char *ascii_logo = "  _      _____ _____ _    _ _______ \n"
                    " | |    |_   _/ ____| |  | |__   __|\n"
                    " | |      | || |  __| |__| |  | |   \n"

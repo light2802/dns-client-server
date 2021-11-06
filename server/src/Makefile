@@ -22,7 +22,8 @@ all: $(TARGET)
 $(OBJS): $(SOURCES) $(INCLUDES)
 
 $(TARGET): $(OBJS)
-	$(CC) -o $(TARGET) $(OBJS) $(LDFLAGS)
+	$(CC) -o ../$(TARGET) $(OBJS) $(LDFLAGS)
+	$(RM) *.o embed/*.o *~
 
 clean:
 	$(RM) *.o embed/*.o *~ $(TARGET)
