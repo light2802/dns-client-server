@@ -39,7 +39,7 @@ struct dns_query make_dns_query(char *hostname, int type) {
     dns->opcode     = 0;                     // This is a standard query
     dns->aa         = 0;                     // Not Authoritative
     dns->tc         = 0;                     // This message is not truncated
-    dns->rd         = 1;                     // Recursion Desired
+    dns->rd         = 0;                     // Recursion Desired
     dns->ra         = 0; // Recursion not available! hey we dont have it (lol)
     dns->z          = 0;
     dns->ad         = 0;
@@ -117,7 +117,45 @@ void read_info(unsigned char *query_buffer, int buffer_len) {
     struct dns_header *dns    = (struct dns_header *)query_buffer;
     struct res_record  answers[20];
     int                i, j, stop = 0, k = 0;
-
+    switch (dns->rcode) {
+    case NOERROR: break;
+    case FORMERR: {
+        printf("Error in format :(\n");
+        return;
+    }
+    case SERVFAIL: {
+        printf("Server failed to complete request :(\n");
+        return;
+    }
+    case NXDOMAIN: {
+        printf("Domain name does not exist :(\n");
+        return;
+    }
+    case NOTIMP: {
+        printf("function not implemented :(\n");
+        return;
+    }
+    case REFUSED: {
+        printf("Server refused to answer :(\n");
+        return;
+    }
+    case YXDOMAIN: {
+        printf("Name should not exist, but exists :(\n");
+        break;
+    }
+    case XRRSET: {
+        printf("Something about RRset I dont completely understand :(\n");
+        return;
+    }
+    case NOTAUTH: {
+        printf("Server not authoritative for the zone :(\n");
+        return;
+    }
+    case NOTZONE: {
+        printf("Name not in zone :(\n");
+        return;
+    }
+    }
     for (i = 0; i < ntohs(dns->ans_count); i++) {
         answers[i].name =
                 read_name(reader, (unsigned char *)query_buffer, &stop);

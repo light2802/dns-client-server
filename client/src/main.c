@@ -18,16 +18,7 @@ int  main(int argc, char **argv) {
             continue;
         }
         // parse url
-        int               err;
-        url_parser_url_t *parsed_url;
-        parsed_url = (url_parser_url_t *)malloc(sizeof(url_parser_url_t));
-        err        = parse_url(argv[i], false, parsed_url);
-        if (err != 0) {
-            printf("Invalid URL \"%s\".\n", argv[i]);
-            continue;
-        }
-        strcpy(host, parsed_url->host);
-        free_parsed_url(parsed_url);
+        strcpy(host, argv[i]);
 
         conf_dns();
         printf("Host : %s\n", host);

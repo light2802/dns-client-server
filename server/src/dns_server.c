@@ -22,12 +22,12 @@ typedef struct {
 typedef struct {
     LOCAL_DNS  local;
     REMOTE_DNS remote;
-} PROXY_ENGINE;
+} SERVER_ENGINE;
 
 static const int enable        = 1;
 static int       disable_cache = 0;
 
-static void process_query(PROXY_ENGINE *engine) {
+static void process_query(SERVER_ENGINE *engine) {
     LOCAL_DNS *        ldns;
     REMOTE_DNS *       rdns;
     DNS_HDR *          hdr, *rhdr;
@@ -372,7 +372,7 @@ static void process_response_tcp(REMOTE_DNS *rdns) {
     }
 }
 
-static PROXY_ENGINE g_engine;
+static SERVER_ENGINE g_engine;
 
 static int dns_server(const char *   local_addr,
                       unsigned short local_port,
@@ -384,7 +384,7 @@ static int dns_server(const char *   local_addr,
     struct timeval     timeout;
     struct sockaddr_in addr;
     time_t             current, last_clean;
-    PROXY_ENGINE *     engine = &g_engine;
+    SERVER_ENGINE *    engine = &g_engine;
     LOCAL_DNS *        ldns   = &engine->local;
     REMOTE_DNS *       rdns   = &engine->remote;
 
@@ -460,6 +460,7 @@ struct xoption options[] = {
         {'T', "remote-tcp", xargument_no, NULL, -1},
         {'P', "remote-port", xargument_required, NULL, -1},
         {'R', "remote-addr", xargument_required, NULL, -1},
+        {'f', "hosts-file", xargument_required, NULL, -1},
         {0, "disable-cache", xargument_no, &disable_cache, 1},
         {0, NULL, xargument_no, NULL, 0},
 };
@@ -475,6 +476,7 @@ static void display_help() {
            "  -P <port> or --remote-port=<port>\n"
            "                       (remote server port, default 53)\n"
            "  -T or --remote-tcp\n"
+           "  -f <file> or --hosts-file=<file>\n"
            "                       (connect remote server in tcp, default no)\n"
            "  -h, --help           (print help and exit)\n"
            "  -v, --version        (print version and exit)\n");
@@ -500,6 +502,7 @@ int main(int argc, const char *argv[]) {
         case 'r': local_addr = optarg; break;
         case 'R': remote_addr = optarg; break;
         case 'T': remote_tcp = 1; break;
+        case 'f': hosts_file = optarg; break;
         case 'v': printf("%s\n", ascii_logo); return 0;
         case 'h':
         default: display_help(); return -1;

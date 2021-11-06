@@ -6,27 +6,40 @@
 #define DNS_QUERY_BUFFER_SIZE sizeof(unsigned char) * 655335
 #define MAX_IP_LEN 15
 
+// Importnant macros
+#define INTERNET 1 // QUERY CLASS = INTERNET : 1
+// Query types
+#define A 1      // a host address
+#define NS 2     // an authoritative name server
+#define MD 3     // a mail destination (Obsolete - use MX)
+#define MF 4     // a mail forwarder (Obsolete - use MX)
+#define CNAME 5  // the canonical name for an alias
+#define SOA 6    // marks the start of a zone of authority
+#define MB 7     // a mailbox domain name (EXPERIMENTAL)
+#define MG 8     // a mail group member (EXPERIMENTAL)
+#define MR 9     // a mail rename domain name (EXPERIMENTAL)
+#define null 10  // a null RR (EXPERIMENTAL)
+#define WKS 11   // a well known service description
+#define PTR 12   // a domain name pointer
+#define HINFO 13 // host information
+#define MINFO 14 // mailbox or mail list information
+#define MX 15    // mail exchange
+#define TXT 16   // text strings
+#define AAAA 28  // IPv6 address
+// Response codes important ones
+#define NOERROR 0  // DNS Query completed successfully
+#define FORMERR 1  // DNS Query Format Error
+#define SERVFAIL 2 // Server failed to complete the DNS request
+#define NXDOMAIN 3 // Domain name does not exist.
+#define NOTIMP 4   // Function not implemented
+#define REFUSED 5  // The server refused to answer for the query
+#define YXDOMAIN 6 // Name that should not exist, does exist
+#define XRRSET 7   // RRset that should not exist, does exist
+#define NOTAUTH 8  // Server not authoritative for the zone
+#define NOTZONE 9  // Name not in zone
+
 // Necessary structures and methods for making DNS query and resolving the
 // response
-#define INTERNET 1 // QUERY CLASS = INTERNET : 1
-#define A 1        // a host address
-#define NS 2       // an authoritative name server
-#define MD 3       // a mail destination (Obsolete - use MX)
-#define MF 4       // a mail forwarder (Obsolete - use MX)
-#define CNAME 5    // the canonical name for an alias
-#define SOA 6      // marks the start of a zone of authority
-#define MB 7       // a mailbox domain name (EXPERIMENTAL)
-#define MG 8       // a mail group member (EXPERIMENTAL)
-#define MR 9       // a mail rename domain name (EXPERIMENTAL)
-#define null 10    // a null RR (EXPERIMENTAL)
-#define WKS 11     // a well known service description
-#define PTR 12     // a domain name pointer
-#define HINFO 13   // host information
-#define MINFO 14   // mailbox or mail list information
-#define MX 15      // mail exchange
-#define TXT 16     // text strings
-#define AAAA 28    // IPv6 address
-
 struct dns_header {
     unsigned short id; // identification number
 
