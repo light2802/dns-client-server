@@ -1,15 +1,13 @@
 # Makefile for dns_server
 
-version := $(shell sh -c 'cat VERSION')
-
 CC = gcc
 RM = rm -f
 CP = cp -f
 
-CFLAGS =  -Wall -DVERSION=\"${version}\"
+CFLAGS = -O2
 LDFLAGS = -s
 
-TARGET = server.out
+TARGET = client.out
 INCLUDES = $(wildcard *.h embed/*.h)
 SOURCES = $(wildcard *.c embed/*.c)
 OBJS = $(patsubst %.c,%.o,$(SOURCES))
