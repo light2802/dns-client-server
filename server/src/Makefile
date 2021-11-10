@@ -6,7 +6,7 @@ CC = gcc
 RM = rm -f
 CP = cp -f
 
-CFLAGS =  -Wall -DVERSION=\"${version}\"
+CFLAGS = -O2 -Wall -DVERSION=\"${version}\" -DNDEBUG
 LDFLAGS = -s
 
 TARGET = server.out

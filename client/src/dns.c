@@ -6,9 +6,9 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
-extern int recurse;
+
 // convert www.google.com to 3www6google3com
-void change_to_dns_name_format(unsigned char *dns, unsigned char *host) {
+void ChangetoDnsNameFormat(unsigned char *dns, unsigned char *host) {
     int lock = 0, i;
     strcat((char *)host, ".");
     for (i = 0; i < strlen((char *)host); i++) {
@@ -26,6 +26,7 @@ void change_to_dns_name_format(unsigned char *dns, unsigned char *host) {
 // make dns query for given hostname of given types and class
 struct dns_query make_dns_query(char *hostname, int type) {
     // 6 layers of header each of 2 bytes
+    int                i;
     unsigned char *    qname;
     struct dns_header *dns   = NULL;
     struct question *  qinfo = NULL;
@@ -38,7 +39,7 @@ struct dns_query make_dns_query(char *hostname, int type) {
     dns->opcode     = 0;                     // This is a standard query
     dns->aa         = 0;                     // Not Authoritative
     dns->tc         = 0;                     // This message is not truncated
-    dns->rd         = recurse;               // Recursion Desired
+    dns->rd         = 0;                     // Recursion Desired
     dns->ra         = 0; // Recursion not available! hey we dont have it (lol)
     dns->z          = 0;
     dns->ad         = 0;
@@ -51,7 +52,7 @@ struct dns_query make_dns_query(char *hostname, int type) {
     // point to the query portion
     qname = &buffer[sizeof(struct dns_header)];
 
-    change_to_dns_name_format(qname, (unsigned char *)hostname);
+    ChangetoDnsNameFormat(qname, (unsigned char *)hostname);
     qinfo = (struct question
                      *)&buffer[sizeof(struct dns_header)
                                + (strlen((const char *)qname) + 1)]; // fill it
@@ -115,7 +116,7 @@ void read_info(unsigned char *query_buffer, int buffer_len) {
     unsigned char *    reader = &query_buffer[buffer_len];
     struct dns_header *dns    = (struct dns_header *)query_buffer;
     struct res_record  answers[20];
-    int                i, j, stop = 0;
+    int                i, j, stop = 0, k = 0;
     switch (dns->rcode) {
     case NOERROR: break;
     case FORMERR: {
@@ -209,17 +210,37 @@ void read_info(unsigned char *query_buffer, int buffer_len) {
             break;
         }
         case CNAME: {
-            printf("%s CNAME : %s\n", answers[i].name, answers[i].rdata);
+            int           x, y;
+            unsigned char cname[1024];
+            bzero(cname, 1024);
+            strcpy(cname, answers[i].rdata);
+            for (x = 0; x < strlen(cname); x++) {
+                y = cname[x];
+                for (int z = 0; z < y; z++) {
+                    cname[x] = cname[x + 1];
+                    x        = x + 1;
+                }
+                cname[x] = '.';
+            }
+            cname[x] = '\0'; // remove the last dot
+            printf("%s CNAME : %s\n", answers[i].name, cname);
             break;
         }
         case MX: {
+            int           x, y;
+            unsigned char mail[1024];
+            bzero(mail, 1024);
+            strcpy(mail, answers[i].rdata);
+            for (x = 0; x < strlen(mail); x++) {
+                y = mail[x];
+                for (int z = 0; z < y; z++) {
+                    mail[x] = mail[x + 1];
+                    x       = x + 1;
+                }
+                mail[x] = '.';
+            }
+            mail[x] = '\0'; // remove the last dot
             printf("%s MX : %s\n", answers[i].name, answers[i].rdata);
-            break;
-        }
-        case SOA: {
-            printf("%s PRIMARY NAME SERVER : %s\n",
-                   answers[i].name,
-                   answers[i].rdata);
             break;
         }
         default: {
@@ -240,6 +261,8 @@ int get_type(char *query_type) {
     if (!strcmp(query_type, "NS")) return NS;
     // Below dont work
     if (!strcmp(query_type, "SOA")) return SOA;
+    if (!strcmp(query_type, "MD")) return MD;
+    if (!strcmp(query_type, "NULL")) return null;
     if (!strcmp(query_type, "WKS")) return WKS;
     if (!strcmp(query_type, "MINFO")) return MINFO;
     if (!strcmp(query_type, "TXT")) return TXT;
