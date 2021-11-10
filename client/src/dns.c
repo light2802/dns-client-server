@@ -6,9 +6,9 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
-
+extern int recurse;
 // convert www.google.com to 3www6google3com
-void ChangetoDnsNameFormat(unsigned char *dns, unsigned char *host) {
+void change_to_dns_name_format(unsigned char *dns, unsigned char *host) {
     int lock = 0, i;
     strcat((char *)host, ".");
     for (i = 0; i < strlen((char *)host); i++) {
@@ -26,7 +26,6 @@ void ChangetoDnsNameFormat(unsigned char *dns, unsigned char *host) {
 // make dns query for given hostname of given types and class
 struct dns_query make_dns_query(char *hostname, int type) {
     // 6 layers of header each of 2 bytes
-    int                i;
     unsigned char *    qname;
     struct dns_header *dns   = NULL;
     struct question *  qinfo = NULL;
@@ -39,7 +38,7 @@ struct dns_query make_dns_query(char *hostname, int type) {
     dns->opcode     = 0;                     // This is a standard query
     dns->aa         = 0;                     // Not Authoritative
     dns->tc         = 0;                     // This message is not truncated
-    dns->rd         = 0;                     // Recursion Desired
+    dns->rd         = recurse;               // Recursion Desired
     dns->ra         = 0; // Recursion not available! hey we dont have it (lol)
     dns->z          = 0;
     dns->ad         = 0;
@@ -52,7 +51,7 @@ struct dns_query make_dns_query(char *hostname, int type) {
     // point to the query portion
     qname = &buffer[sizeof(struct dns_header)];
 
-    ChangetoDnsNameFormat(qname, (unsigned char *)hostname);
+    change_to_dns_name_format(qname, (unsigned char *)hostname);
     qinfo = (struct question
                      *)&buffer[sizeof(struct dns_header)
                                + (strlen((const char *)qname) + 1)]; // fill it
@@ -116,7 +115,7 @@ void read_info(unsigned char *query_buffer, int buffer_len) {
     unsigned char *    reader = &query_buffer[buffer_len];
     struct dns_header *dns    = (struct dns_header *)query_buffer;
     struct res_record  answers[20];
-    int                i, j, stop = 0, k = 0;
+    int                i, j, stop = 0;
     switch (dns->rcode) {
     case NOERROR: break;
     case FORMERR: {
@@ -187,10 +186,6 @@ void read_info(unsigned char *query_buffer, int buffer_len) {
     printf("Storing done\n");
     for (i = 0; i < ntohs(dns->ans_count); i++) {
         switch (ntohs(answers[i].resource->type)) {
-        case NS: {
-            printf("%s NS : %s\n", answers[i].name, answers[i].rdata);
-            break;
-        }
         case A: {
             char           addr[INET_ADDRSTRLEN];
             struct in_addr s;
@@ -210,37 +205,17 @@ void read_info(unsigned char *query_buffer, int buffer_len) {
             break;
         }
         case CNAME: {
-            int           x, y;
-            unsigned char cname[1024];
-            bzero(cname, 1024);
-            strcpy(cname, answers[i].rdata);
-            for (x = 0; x < strlen(cname); x++) {
-                y = cname[x];
-                for (int z = 0; z < y; z++) {
-                    cname[x] = cname[x + 1];
-                    x        = x + 1;
-                }
-                cname[x] = '.';
-            }
-            cname[x] = '\0'; // remove the last dot
-            printf("%s CNAME : %s\n", answers[i].name, cname);
+            printf("%s CNAME : %s\n", answers[i].name, answers[i].rdata);
             break;
         }
         case MX: {
-            int           x, y;
-            unsigned char mail[1024];
-            bzero(mail, 1024);
-            strcpy(mail, answers[i].rdata);
-            for (x = 0; x < strlen(mail); x++) {
-                y = mail[x];
-                for (int z = 0; z < y; z++) {
-                    mail[x] = mail[x + 1];
-                    x       = x + 1;
-                }
-                mail[x] = '.';
-            }
-            mail[x] = '\0'; // remove the last dot
             printf("%s MX : %s\n", answers[i].name, answers[i].rdata);
+            break;
+        }
+        case SOA: {
+            printf("%s PRIMARY NAME SERVER : %s\n",
+                   answers[i].name,
+                   answers[i].rdata);
             break;
         }
         default: {
@@ -261,75 +236,15 @@ int get_type(char *query_type) {
     if (!strcmp(query_type, "NS")) return NS;
     // Below dont work
     if (!strcmp(query_type, "SOA")) return SOA;
-    if (!strcmp(query_type, "MD")) return MD;
-    if (!strcmp(query_type, "NULL")) return null;
     if (!strcmp(query_type, "WKS")) return WKS;
     if (!strcmp(query_type, "MINFO")) return MINFO;
     if (!strcmp(query_type, "TXT")) return TXT;
     return -1;
 }
-char *name_level(char *hostname, int level) {
-    int len = strlen(hostname);
-    for (int i = len - 1; i >= 0; i--) {
-        if (hostname[i] == '.') {
-            if (!(level--)) return &hostname[i + 1];
-        }
-    }
-    return hostname;
-}
 
-void get_info_iterate(char *             hostname,
-                      struct sockaddr_in dns_server,
-                      char *             query_type) {
-    int                sock = socket(AF_INET, SOCK_DGRAM, 0);
-    struct sockaddr_in server_addr;
-    server_addr = dns_server;
-    struct dns_query q;
-    int              len = sizeof(server_addr);
-    unsigned char    answer_query_buffer[DNS_QUERY_BUFFER_SIZE];
-    int              type = get_type(query_type);
-    int              i    = 1;
-    strcat(hostname, ".");
-    while (strcmp(hostname, name_level(hostname, i))) {
-        get_ns_by_name(name_level(hostname, i), &dns_server);
-
-        i++;
-    }
-
-    if (type < 0) {
-        printf("Invlaid query type :(\n");
-        return;
-    }
-    q = make_dns_query(hostname, type);
-    if (sendto(sock,
-               q.query,
-               q.len,
-               0,
-               (struct sockaddr *)&server_addr,
-               sizeof(server_addr))
-        < 0) {
-        printf("SEND FAIL\n");
-    } else
-        printf("SEND SUCESS\n");
-    if (recvfrom(sock,
-                 answer_query_buffer,
-                 DNS_QUERY_BUFFER_SIZE,
-                 0,
-                 (struct sockaddr *)&server_addr,
-                 (socklen_t *)(&len))
-        < 0)
-        printf("Recieve fail\n");
-    else
-        printf("Recieve success\n");
-    read_info(answer_query_buffer, q.len);
-
-    printf("\n\n");
-    close(sock);
-}
-
-void get_info_recurse(char *             hostname,
-                      struct sockaddr_in dns_server,
-                      char *             query_type) {
+void get_info(char *             hostname,
+              struct sockaddr_in dns_server,
+              char *             query_type) {
     int                sock = socket(AF_INET, SOCK_DGRAM, 0);
     struct sockaddr_in server_addr;
     server_addr = dns_server;

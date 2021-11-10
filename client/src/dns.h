@@ -11,14 +11,8 @@
 // Query types
 #define A 1      // a host address
 #define NS 2     // an authoritative name server
-#define MD 3     // a mail destination (Obsolete - use MX)
-#define MF 4     // a mail forwarder (Obsolete - use MX)
 #define CNAME 5  // the canonical name for an alias
 #define SOA 6    // marks the start of a zone of authority
-#define MB 7     // a mailbox domain name (EXPERIMENTAL)
-#define MG 8     // a mail group member (EXPERIMENTAL)
-#define MR 9     // a mail rename domain name (EXPERIMENTAL)
-#define null 10  // a null RR (EXPERIMENTAL)
 #define WKS 11   // a well known service description
 #define PTR 12   // a domain name pointer
 #define HINFO 13 // host information
@@ -79,10 +73,5 @@ struct question {
     unsigned short qtype;
     unsigned short qclass;
 };
-void get_info_recurse(char *             hostname,
-                      struct sockaddr_in dns_server,
-                      char *             query_type);
-void get_info_iterate(char *             hostname,
-                      struct sockaddr_in dns_server,
-                      char *             query_type);
+void get_info(char *hostname, struct sockaddr_in dns_server, char *query_type);
 #endif

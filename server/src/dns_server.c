@@ -69,14 +69,14 @@ static void process_query(SERVER_ENGINE *engine) {
     head     = buffer + sizeof(DNS_HDR);
     rear     = buffer + size;
     if (hdr->qr != 0 || hdr->tc != 0 || ntohs(hdr->qd_count) != 1)
-        rhdr->rcode = FORMERR;
+        rhdr->rcode = 1;
     else {
         dlen = 0;
         pos  = head;
         while (pos < rear) {
             qlen = (unsigned char)*pos++;
             if (qlen > 63 || (pos + qlen) > (rear - sizeof(DNS_QDS))) {
-                rhdr->rcode = FORMERR;
+                rhdr->rcode = 1;
                 break;
             }
             if (qlen > 0) {
@@ -85,8 +85,8 @@ static void process_query(SERVER_ENGINE *engine) {
                     domain[dlen++] = (char)tolower(*pos++);
             } else {
                 qds = (DNS_QDS *)pos;
-                if (ntohs(qds->classes) != INTERNET)
-                    rhdr->rcode = NOTIMP;
+                if (ntohs(qds->classes) != 0x01)
+                    rhdr->rcode = 4;
                 else {
                     pos += sizeof(DNS_QDS);
                     q_len = pos - head;
@@ -97,7 +97,7 @@ static void process_query(SERVER_ENGINE *engine) {
         domain[dlen] = '\0';
     }
 
-    if (rhdr->rcode == NOERROR && ntohs(qds->type) == A) {
+    if (rhdr->rcode == 0 && ntohs(qds->type) == 0x01) {
         dcache = domain_cache_search(domain);
         if (dcache) {
             rhdr->qd_count = htons(1);
@@ -148,7 +148,7 @@ static void process_query(SERVER_ENGINE *engine) {
         }
     }
 
-    if (rhdr->rcode == NOERROR) {
+    if (rhdr->rcode == 0) {
         tcache = transport_cache_insert(ntohs(hdr->id), &source, ldns);
         if (tcache == NULL)
             rhdr->rcode = 2;
@@ -162,7 +162,7 @@ static void process_query(SERVER_ENGINE *engine) {
                            (struct sockaddr *)&rdns->addr,
                            sizeof(struct sockaddr_in))
                     != size)
-                    rhdr->rcode = SERVFAIL;
+                    rhdr->rcode = 2;
             } else {
                 if (rdns->sock == INVALID_SOCKET) {
                     rdns->head = 0;
@@ -184,7 +184,7 @@ static void process_query(SERVER_ENGINE *engine) {
                     }
                 }
                 if (rdns->sock == INVALID_SOCKET)
-                    rhdr->rcode = SERVFAIL;
+                    rhdr->rcode = 2;
                 else {
                     pos                    = ldns->buffer;
                     *(unsigned short *)pos = htons((unsigned short)size);
@@ -194,14 +194,14 @@ static void process_query(SERVER_ENGINE *engine) {
                         rdns->rear = 0;
                         closesocket(rdns->sock);
                         rdns->sock  = INVALID_SOCKET;
-                        rhdr->rcode = SERVFAIL;
+                        rhdr->rcode = 2;
                     }
                 }
             }
-            if (rhdr->rcode != NOERROR) transport_cache_delete(tcache);
+            if (rhdr->rcode != 0) transport_cache_delete(tcache);
         }
     }
-    if (rhdr->rcode != NOERROR)
+    if (rhdr->rcode != 0)
         sendto(ldns->sock,
                rbuffer,
                sizeof(DNS_HDR),
@@ -241,7 +241,7 @@ static void process_response(char *buffer, int size) {
                     domain[dlen++] = (char)tolower(*pos++);
             } else {
                 qds = (DNS_QDS *)pos;
-                if (ntohs(qds->classes) != INTERNET)
+                if (ntohs(qds->classes) != 0x01)
                     qds = NULL;
                 else
                     pos += sizeof(DNS_QDS);
@@ -250,7 +250,7 @@ static void process_response(char *buffer, int size) {
         }
         domain[dlen] = '\0';
 
-        if (qds && ntohs(qds->type) == A) {
+        if (qds && ntohs(qds->type) == 0x01) {
             ttl    = MAX_TTL;
             index  = 0;
             badfmt = 0;
@@ -274,7 +274,7 @@ static void process_response(char *buffer, int size) {
                         }
                     }
                 }
-                if (rrs == NULL || ntohs(rrs->classes) != INTERNET)
+                if (rrs == NULL || ntohs(rrs->classes) != 0x01)
                     badfmt = 1;
                 else {
                     ttl_tmp = ntohl(rrs->ttl);
