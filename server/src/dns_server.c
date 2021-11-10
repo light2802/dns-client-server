@@ -96,7 +96,21 @@ static void process_query(SERVER_ENGINE *engine) {
         }
         domain[dlen] = '\0';
     }
-
+    if (hdr->rd == 0) {
+        char temp[PACKAGE_SIZE];
+        strcpy(temp, domain);
+        strcat(temp, ".");
+        int len = strlen(temp);
+        int i   = len - 2;
+        while (i) {
+            if (temp[i] != '.')
+                i--;
+            else {
+                dcache = domain_cache_search(temp + i + 1);
+                if (dcache) {}
+            }
+        }
+    }
     if (rhdr->rcode == 0 && ntohs(qds->type) == 0x01) {
         dcache = domain_cache_search(domain);
         if (dcache) {
