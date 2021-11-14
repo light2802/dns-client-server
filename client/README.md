@@ -1,8 +1,7 @@
 dns_client                                                                  
                                                                                
 A simple dns client like nslookup
-Shows all answers sent by the dns server (well currently only shows A,AAAA,MX,
-CNAME)
+Shows all answers sent by the dns server (well currently only shows A,AAAA,MX,CNAME, NS, SOA)
                                                                                
 ## Compiling                                                                   
                                                                                
@@ -14,13 +13,13 @@ $ make check
 ## Simple tutorial                                                             
                                                                                
 ```bash                                                                        
-$ ./client.out http://<domain_name>                                                           
+$ ./client.out <domain_name>                                                           
 ```                                                                            
                                                                                
 ## Example                                                          
                                                                                
 ```                                   
-$ ./client.out http://www.google.com
+$ ./client.out www.google.com
 Host : www.google.com
 SEND SUCESS
 Recieve success

@@ -12,12 +12,12 @@
 struct xoption options[] = {
         {'v', "version", xargument_no, NULL, -1},
         {'h', "help", xargument_no, NULL, -1},
-        {'r', "recurse", xargument_no, NULL, -1},
+        {'i', "iterate", xargument_no, NULL, -1},
         {'q', "query-type", xargument_required, NULL, -1},
         {'d', "domain", xargument_required, NULL, -1},
         {0, NULL, xargument_no, NULL, 0},
 };
-int  recurse = 0;
+int  recurse = 1;
 void conf_dns();
 void display_help();
 int  main(int argc, const char **argv) {
@@ -33,15 +33,19 @@ int  main(int argc, const char **argv) {
     while (opt != -1) {
         switch (opt) {
         case 0: break;
-        case 'r': recurse = 1; break;
+        case 'i': recurse = 0; break;
         case 'q': strcpy(query_type, optarg); break;
         case 'v': printf("%s\n", ascii_logo); return 0;
-        case 'h': display_help(); return -1;
         case 'd':
-        default:
             strcpy(host, optarg);
             printf("Host : %s\n", host);
-            get_info(host, _res.nsaddr_list[0], query_type);
+            if (recurse)
+                get_info(host, _res.nsaddr_list[0], query_type);
+            else
+                get_info_iterate(host, _res.nsaddr_list[0], query_type);
+            break;
+        case 'h':
+        default: display_help(); return -1;
         }
         opt = xgetopt(argc, argv, options, &optind, &optarg);
     }
@@ -49,7 +53,7 @@ int  main(int argc, const char **argv) {
 
 void display_help() {
     printf("Usage: dns_server [options]\n"
-           "  -r or --recurse\n"
+           "  -i or --iterate\n"
            "                       (tell server to work recursively, default no)\n"
            "  -q <query type> or --query-type=<query type>\n"
            "                       (make query of type, default A)\n"

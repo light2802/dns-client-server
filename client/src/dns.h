@@ -73,5 +73,8 @@ struct question {
     unsigned short qtype;
     unsigned short qclass;
 };
+void get_info_iterate(char *             hostname,
+                      struct sockaddr_in dns_server,
+                      char *             query_type);
 void get_info(char *hostname, struct sockaddr_in dns_server, char *query_type);
 #endif

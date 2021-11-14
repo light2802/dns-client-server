@@ -183,7 +183,7 @@ void read_info(unsigned char *query_buffer, int buffer_len) {
             reader += stop;
         }
     }
-    printf("Storing done\n");
+    // printf("Storing done\n");
     for (i = 0; i < ntohs(dns->ans_count); i++) {
         switch (ntohs(answers[i].resource->type)) {
         case A: {
@@ -218,6 +218,11 @@ void read_info(unsigned char *query_buffer, int buffer_len) {
                    answers[i].rdata);
             break;
         }
+        case NS: {
+            printf("%s NAME SERVER : %s\n", answers[i].name, answers[i].rdata);
+            break;
+        }
+
         default: {
             printf("This response type not supported yet :(\n");
         }
@@ -242,6 +247,110 @@ int get_type(char *query_type) {
     return -1;
 }
 
+struct res_record
+get_answer(unsigned char *query_buffer, int buffer_len, int type) {
+    unsigned char *    reader = &query_buffer[buffer_len];
+    struct dns_header *dns    = (struct dns_header *)query_buffer;
+    struct res_record  answers[20];
+    int                i, j, stop = 0, k = 0;
+
+    for (i = 0; i < ntohs(dns->ans_count); i++) {
+        answers[i].name = read_name(reader, query_buffer, &stop);
+        reader += stop;
+
+        answers[i].resource = (struct res_data *)(reader);
+        reader += sizeof(struct res_data);
+
+        if (ntohs(answers[i].resource->type) == A) {
+            if (ntohs(answers[i].resource->type) == type) k = i;
+            answers[i].rdata = (unsigned char *)malloc(
+                    ntohs(answers[i].resource->rdlength));
+
+            for (j = 0; j < ntohs(answers[i].resource->rdlength); j++) {
+                answers[i].rdata[j] = reader[j];
+            }
+
+            answers[i].rdata[ntohs(answers[i].resource->rdlength)] = '\0';
+
+            reader += ntohs(answers[i].resource->rdlength);
+        } else {
+            answers[i].rdata = read_name(reader, query_buffer, &stop);
+            reader += stop;
+        }
+    }
+    return answers[k];
+}
+
+struct sockaddr_in get_ns(char *hostname, struct sockaddr_in dns_server) {
+    int                sock = socket(AF_INET, SOCK_DGRAM, 0);
+    struct sockaddr_in server_addr;
+    server_addr = dns_server;
+    struct dns_query  q;
+    int               len = sizeof(server_addr);
+    unsigned char     answer_query_buffer[DNS_QUERY_BUFFER_SIZE];
+    struct res_record answer;
+    q = make_dns_query(hostname, NS);
+    if (sendto(sock,
+               q.query,
+               q.len,
+               0,
+               (struct sockaddr *)&server_addr,
+               sizeof(server_addr))
+        < 0) {
+        printf("SEND FAIL\n");
+    }
+    if (recvfrom(sock,
+                 answer_query_buffer,
+                 DNS_QUERY_BUFFER_SIZE,
+                 0,
+                 (struct sockaddr *)&server_addr,
+                 (socklen_t *)(&len))
+        < 0)
+        printf("Recieve fail\n");
+    answer = get_answer(answer_query_buffer, q.len, NS);
+    printf("%s\n", answer.rdata);
+
+    bzero(answer_query_buffer, DNS_QUERY_BUFFER_SIZE);
+    q = make_dns_query((char *)answer.rdata, A);
+    if (sendto(sock,
+               q.query,
+               q.len,
+               0,
+               (struct sockaddr *)&server_addr,
+               sizeof(server_addr))
+        < 0) {
+        printf("SEND FAIL\n");
+    }
+    if (recvfrom(sock,
+                 answer_query_buffer,
+                 DNS_QUERY_BUFFER_SIZE,
+                 0,
+                 (struct sockaddr *)&server_addr,
+                 (socklen_t *)(&len))
+        < 0)
+        printf("Recieve fail\n");
+    free(answer.name);
+    free(answer.rdata);
+
+    answer                     = get_answer(answer_query_buffer, q.len, A);
+    dns_server.sin_addr.s_addr = (long)answer.rdata;
+    free(answer.name);
+    free(answer.rdata);
+    close(sock);
+    return dns_server;
+}
+
+void get_info_iterate(char *             hostname,
+                      struct sockaddr_in dns_server,
+                      char *             query_type) {
+    strcat(hostname, ".");
+    char *temp = hostname + strlen(hostname) - 2;
+    while (strcmp(temp, hostname)) {
+        if (*temp == '.') dns_server = get_ns(temp + 1, dns_server);
+        temp--;
+    }
+    get_info(hostname, dns_server, query_type);
+}
 void get_info(char *             hostname,
               struct sockaddr_in dns_server,
               char *             query_type) {
@@ -265,8 +374,9 @@ void get_info(char *             hostname,
                sizeof(server_addr))
         < 0) {
         printf("SEND FAIL\n");
-    } else
-        printf("SEND SUCESS\n");
+    } else {
+        // printf("SEND SUCESS\n");
+    }
     if (recvfrom(sock,
                  answer_query_buffer,
                  DNS_QUERY_BUFFER_SIZE,
@@ -275,8 +385,9 @@ void get_info(char *             hostname,
                  (socklen_t *)(&len))
         < 0)
         printf("Recieve fail\n");
-    else
-        printf("Recieve success\n");
+    else {
+        // printf("Recieve success\n");
+    }
     read_info(answer_query_buffer, q.len);
 
     printf("\n\n");
