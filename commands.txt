@@ -1,0 +1,33 @@
+#GENERAL
+#To compile the code
+make
+
+#To see help
+./<client,server>.out -h
+
+#SERVER
+#To run server with default settings
+sudo ./server.out
+
+#To run server at user-defined ip, say 127.0.0.32#45
+#Put this ip in resolv.conf if you want it to work
+sudo ./server.out -r 127.0.32 -p 45
+
+#to change TLD ip to user-defined ip, say 2.2.2.2#53
+sudo ./server.out -R 127.0.32 -P 45
+
+#To specify a hosts file, sample hosts file included(not made by me)
+sudo ./server.out -f hosts
+
+#To connect to remote dns server via tcp
+sudo ./server.out -T
+
+#CLIENT
+#Simple run with default preferences ie A query recursively
+./client.out -d www.google.com
+
+#Make different type of queries for different hostnames
+./client.out -q MX -d www.microsoft.com -q AAAA -d www.google.com
+
+#Make queries iteratively (doesn't work)
+./client.out -i -d www.google.com
